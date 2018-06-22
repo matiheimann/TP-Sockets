@@ -2,5 +2,5 @@
 
 char* handleQuery(char* query)
 {
-	return "todo";
+	return "Hi im server!";
 }

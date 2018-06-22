@@ -25,13 +25,15 @@ int main()
 
 	
 	//New socket
-	serverDescriptor = socket(AF_LOCAL, SOCK_STREAM, 0);
+	serverDescriptor = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(serverDescriptor == -1)
 	{
 		perror("Socket could not be created");
 		exit(1);
 	}
+
 	memset(&serverAddress, 0, sizeof(struct sockaddr_un));
+	serverAddress.sun_family = AF_UNIX;
 	strncpy(serverAddress.sun_path, SOCKET_PATH, sizeof(serverAddress.sun_path));
 
 	//Give name to socket
