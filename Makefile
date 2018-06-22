@@ -22,6 +22,6 @@ $(SERVER): $(DEPS) $(DATABASE)
 	$(GCC) -o $@ $(SOURCES_SERVER) $(GCCFLAGS) 
 
 clean:
-	rm -ff *.o $(CLIENT) $(SERVER)
+	rm -ff *.o $(CLIENT) $(SERVER) socket_path_is_useful
 
 .PHONY: all clean
