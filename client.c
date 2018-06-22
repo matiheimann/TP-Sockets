@@ -18,6 +18,7 @@ int main(int argc, char const *argv[])
 	int serverDescriptor;
 	struct sockaddr_un serverAddress;
 	serverDescriptor = socket(AF_UNIX, SOCK_STREAM, 0);
+	printf("Starting new client (pid:%d)...\n", getpid());
 	if(serverDescriptor == -1)
 	{
 		perror("Socket could not be created");
@@ -31,6 +32,7 @@ int main(int argc, char const *argv[])
 		perror("Bind error");
 		exit(1);
 	}
+	printf("Client (pid:%d) connecting to server...\n", getpid());
 	while(1)
 	{
 		char* buffer = calloc(200, 1);
@@ -47,7 +49,6 @@ int main(int argc, char const *argv[])
 			exit(1);
 		}
 		printf("%s\n", buffer);
-		sleep(1);
 		free(buffer);
 	}
 	close(serverDescriptor);

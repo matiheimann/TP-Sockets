@@ -22,7 +22,7 @@ int main()
 	int * connectionDescriptor;
 	struct sockaddr_un serverAddress, clientAddress;
 	socklen_t clientAddressSize = sizeof(struct sockaddr_un);
-
+	printf("Starting new server (pid:%d)...\n", getpid());
 	
 	//New socket
 	serverDescriptor = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -35,7 +35,7 @@ int main()
 	memset(&serverAddress, 0, sizeof(struct sockaddr_un));
 	serverAddress.sun_family = AF_UNIX;
 	strncpy(serverAddress.sun_path, SOCKET_PATH, sizeof(serverAddress.sun_path));
-
+	unlink(SOCKET_PATH);
 	//Give name to socket
 	if(bind(serverDescriptor, (struct sockaddr *) &serverAddress, sizeof(struct sockaddr_un)) == -1)
 	{
@@ -48,7 +48,7 @@ int main()
 		perror("Listen error");
 		exit(1);
 	}
-
+	printf("Server accepting connections...\n");
 	while((clientDescriptor = accept(serverDescriptor,(struct sockaddr*)&clientAddress, &clientAddressSize)))
 	{
 		//Create thread 
@@ -73,6 +73,7 @@ int main()
 
 void* connectionSolver(void *connectionDescriptor)
 {
+	sleep(10);
 	/*Aca se resuelve la conexion con el servidor del thread*/
 	int descriptor = *((int *)connectionDescriptor);
 	char* buffer = calloc(MESSAGE_SIZE, sizeof(char));
@@ -81,6 +82,7 @@ void* connectionSolver(void *connectionDescriptor)
 	write(descriptor,answer, strlen(answer));
 	free(buffer);
 	free(connectionDescriptor);
+	printf("Communication handled.\n");
 	return NULL;
 
 }
