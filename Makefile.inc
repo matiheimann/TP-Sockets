@@ -1,2 +1,2 @@
 GCC=gcc
-GCCFLAGS= -Wall -Iinclude -lm -pedantic -lpthread
+GCCFLAGS= -Wall -Iinclude -lm -pedantic -lpthread -lsqlite3
