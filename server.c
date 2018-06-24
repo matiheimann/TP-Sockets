@@ -111,6 +111,22 @@ void* connectionSolver(void *connectionDescriptor)
 			}
 		}
 
+		if(startsWith(buffer, "validate existing user id: "))
+		{
+			userIDString = buffer + 27;
+			userID = atoi(userIDString);
+			printf("Validating user id %d\n", userID);
+
+			if(userExists(database, userID))
+			{
+				write(descriptor, "user exists", 11);
+			}
+			else
+			{
+				write(descriptor, "user does not exist", 19);
+			}
+		}
+
 		if(strcmp(buffer, "exit") == 0)
 		{
 			exit = 1;

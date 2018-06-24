@@ -21,6 +21,8 @@ int main(int argc, char const *argv[])
 	int serverDescriptor;
 	struct sockaddr_un serverAddress;
 	serverDescriptor = socket(AF_UNIX, SOCK_STREAM, 0);
+	char* loggedInUserID;
+
 	printf("Starting new client (pid:%d)...\n", getpid());
 	if(serverDescriptor == -1)
 	{
@@ -56,6 +58,7 @@ int main(int argc, char const *argv[])
 			
 			newUserFlag = 1;
 			printf("%s\n", "User succesfully created\n");
+			loggedInUserID = command;
 		}
 
 		if(strcmp(command, "n") == 0)
@@ -70,6 +73,7 @@ int main(int argc, char const *argv[])
 
 			newUserFlag = 1;
 			printf("%s\n", "Login succesful\n");
+			loggedInUserID = command;
 		}
 	}
 
@@ -95,7 +99,7 @@ int isUserCreated(char* userID, int serverDescriptor)
 	char* messageToServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
 	char* messageFromServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
 
-	strcpy(messageToServer, "validate user id: ");
+	strcpy(messageToServer, "validate existing user id: ");
 	strcat(messageToServer, userID);
 
 	if(!isUserIDFormatCorrect(userID))
