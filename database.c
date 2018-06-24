@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 //Simple test
-int main()
+/*int main()
 {
 	sqlite3* database;
 
@@ -21,26 +21,26 @@ int main()
 
    	deleteFlight(database, 1); //Al estar ON DELETE CASCADE para las foreign keys, se eliminaran los asientos 
    	  							//y reservas asociados al vuelo eliminado.
+	
 
+	userExists(database, 3);
 	sqlite3_close(database);
-}
+}*/
 
 char* handleQuery(char* query)
 {
 	return "Hi im server!";
 }
 
-void addUser(sqlite3* database, char* username, int userID)
+void addUser(sqlite3* database, int userID)
 {
-   char sqlStatement[100];
-   char userIDToString[5]; 
+   char sqlStatement[50];
+   char userIDToString[4]; 
 
    strcpy(sqlStatement,"INSERT INTO user VALUES(");
    sprintf(userIDToString, "%d", userID);
    strcat(sqlStatement, userIDToString);
-   strcat(sqlStatement, ",'");
-   strcat(sqlStatement, username);
-   strcat(sqlStatement, "');");
+   strcat(sqlStatement, ");");
 
    executeSQLStatement(sqlStatement, database);
 }
@@ -148,6 +148,34 @@ void deleteReservation(sqlite3* database, int userID)
 	strcat(sqlStatement, ";");
 
 	executeSQLStatement(sqlStatement, database);
+}
+
+int userExists(sqlite3* database, int userID)
+{
+	char sqlStatement[50];
+	char userIDToString[5];
+
+	strcpy(sqlStatement, "SELECT * FROM user WHERE userID=");
+	sprintf(userIDToString, "%d", userID);
+	strcat(sqlStatement, userIDToString);
+	strcat(sqlStatement, ";");
+
+	char *errorMessage = 0;
+	int userFound = USER_NOT_FOUND;
+
+	if(sqlite3_exec(database, sqlStatement, selectUserCallback, (int*)&userFound, &errorMessage) != SQLITE_OK)
+	{
+		fprintf(stderr, "SQL error: %s\n", errorMessage);
+      	sqlite3_free(errorMessage);
+	}	
+
+	return userFound == USER_FOUND ? 1 : 0;
+}
+
+int selectUserCallback(void *data, int argc, char **argv, char **azColName)
+{
+   	*((int*)data) = USER_FOUND;
+   	return 0;
 }
 
 void executeSQLStatement(char* statement, sqlite3* database)

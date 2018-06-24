@@ -12,8 +12,7 @@
 #include <pthread.h>
 #include "server.h"
 #include "database.h"
-
-
+#include "utilities.h"
 
 int main()
 {
@@ -71,18 +70,59 @@ int main()
 	
 }
 
+//This functions handles the connection with the client
 void* connectionSolver(void *connectionDescriptor)
 {
-	sleep(10);
-	/*Aca se resuelve la conexion con el servidor del thread*/
 	int descriptor = *((int *)connectionDescriptor);
 	char* buffer = calloc(MESSAGE_SIZE, sizeof(char));
-	read(descriptor, buffer, sizeof(char*));
-	char* answer = handleQuery(buffer);
-	write(descriptor,answer, strlen(answer));
+	char* userIDString;
+	int userID;
+
+	sqlite3* database;
+
+	if(sqlite3_open("database.db", &database) != SQLITE_OK) //Connect to database
+   	{
+   		fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(database));
+   	}
+
+   	executeSQLStatement("PRAGMA foreign_keys = ON;", database); //Enable foreign keys in sqlite3
+
+	int exit = 0;
+	while(exit == 0)
+	{
+		memset(buffer, '\0', MESSAGE_SIZE); //Clear buffer before reading
+
+		read(descriptor, buffer, MESSAGE_SIZE);
+
+		if(startsWith(buffer, "validate user id: "))
+		{
+			userIDString = buffer + 18;
+			userID = atoi(userIDString);
+			printf("Validating user id %d\n", userID);
+
+			if(userExists(database, userID))
+			{
+				write(descriptor, "user exists", 11);
+			}
+			else
+			{
+				write(descriptor, "user does not exist", 19);
+				addUser(database, userID); //Create new user in database
+			}
+		}
+
+		if(strcmp(buffer, "exit") == 0)
+		{
+			exit = 1;
+			printf("%s\n", "exit\n");
+		}
+	}
+
+	sqlite3_close(database);
+
 	free(buffer);
 	free(connectionDescriptor);
-	printf("Communication handled.\n");
+	//char* answer = handleQuery(buffer);
+	//write(descriptor,answer, strlen(answer));
 	return NULL;
-
 }
