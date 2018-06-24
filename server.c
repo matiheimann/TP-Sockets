@@ -76,6 +76,7 @@ void* connectionSolver(void *connectionDescriptor)
 	int descriptor = *((int *)connectionDescriptor);
 	char* buffer = calloc(MESSAGE_SIZE, sizeof(char));
 	char* userIDString;
+	char* loggedInUserID;
 	int userID;
 
 	sqlite3* database;
@@ -108,6 +109,8 @@ void* connectionSolver(void *connectionDescriptor)
 			{
 				write(descriptor, "user does not exist", 19);
 				addUser(database, userID); //Create new user in database
+				loggedInUserID = userIDString;
+				printf("%s%s\n", loggedInUserID, " logged in\n");
 			}
 		}
 
@@ -120,6 +123,8 @@ void* connectionSolver(void *connectionDescriptor)
 			if(userExists(database, userID))
 			{
 				write(descriptor, "user exists", 11);
+				loggedInUserID = userIDString;
+				printf("%s%s\n", loggedInUserID, " logged in\n");
 			}
 			else
 			{

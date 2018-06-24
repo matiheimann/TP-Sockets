@@ -77,6 +77,7 @@ int main(int argc, char const *argv[])
 		}
 	}
 
+	printf("%s%s\n", "Logged in with user id: ", loggedInUserID);
 	printf("%s\n", "What do you want to do?\n");
 
 	while(exit == 0)
