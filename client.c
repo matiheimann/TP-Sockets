@@ -15,6 +15,7 @@
 #include "server.h"
 #include "database.h"
 #include "client.h"
+#include "utilities.h"
 
 int main(int argc, char const *argv[])
 {
@@ -77,13 +78,50 @@ int main(int argc, char const *argv[])
 		}
 	}
 
+	char* flightNumber;
+	char* messageFromServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
+
 	printf("%s%s\n", "Logged in with user id: ", loggedInUserID);
-	printf("%s\n", "What do you want to do?\n");
+	printf("%s", "What do you want to do?\n");
+	printf("%s\n", "Available commands: ");
+	printf("%s\n", "Add flight (enter 'AFn', where n is the flight number. Flight numbers cant have more than 3 digits)");
+	printf("%s\n", "Delete flight (enter 'DFn', where n is the flight number. Flight numbers cant have more than 3 digits)");
+	printf("%s\n", "Check flight state (enter 'Fn' where n is the flight number)\nIn the list presented after executing this command, A stands for available and R stands for reserved\n");
 
 	while(exit == 0)
 	{
 		scanf("%s", command);
 
+		if(startsWith(command, "AF"))
+		{
+			flightNumber = command + 2;
+			if(isValidFlightNumber(flightNumber))
+			{
+				write(serverDescriptor, command, strlen(command));
+				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
+				printf("%s\n", messageFromServer);
+			}
+		}
+		if(startsWith(command, "DF"))
+		{
+			flightNumber = command + 2;
+			if(isValidFlightNumber(flightNumber))
+			{
+				write(serverDescriptor, command, strlen(command));
+				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
+				printf("%s\n", messageFromServer);
+			}
+		}
+		if(startsWith(command, "F"))
+		{
+			flightNumber = command + 1;
+			if(isValidFlightNumber(flightNumber))
+			{
+				write(serverDescriptor, command, strlen(command));
+				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
+				printf("%s\n", messageFromServer);
+			}
+		}
 		if(strcmp(command,"exit") == 0)
 		{
 			exit = 1;
@@ -119,7 +157,7 @@ int isUserCreated(char* userID, int serverDescriptor)
 		return 1;
 	}
 
-	printf("%s\n", "User id does not exist, try again: \n");
+	printf("%s\n", "User id does not exist, try again: ");
 	free(messageFromServer);
 	return 0;
 }
@@ -144,7 +182,7 @@ int isNewUserIDValid(char* userID, int serverDescriptor)
 
 	if(strcmp(messageFromServer, "user exists") == 0)
 	{
-		printf("%s\n", "Error, userID already exists, try again:\n");
+		printf("%s\n", "Error, userID already exists, try again:");
 		free(messageFromServer);
 		return 0;
 	}
@@ -155,7 +193,7 @@ int isNewUserIDValid(char* userID, int serverDescriptor)
 		return 1;
 	}
 
-	printf("%s\n", "Error while searching user in database, try again:\n");
+	printf("%s\n", "Error while searching user in database, try again:");
 	return 0;
 }
 
@@ -164,21 +202,33 @@ int isUserIDFormatCorrect(char* userID)
 {
 	int id = atoi(userID);
 
-	//Check if id is a number
-	int i;
-	for(i=0; i<strlen(userID); i++)
+	if(!isNumber(userID))
 	{
-		if(!isdigit(userID[i]))
-		{
-			printf("%s\n", "Error, userID must be an integer\n");
-			return 0;
-		}
+		printf("%s\n", "Error, userID must be an integer");
+		return 0;
 	}
 
-	//Check amount of digits
-	if(((int)(log10(id) + 1)) > 3) //More than three digits, invalid
+	if(hasMoreThanThreeDigits(id)) 
 	{
-		printf("%s\n", "Error, userID must be of equal or less than 3 digits, try again:\n");
+		printf("%s\n", "Error, userID must be of equal or less than 3 digits, try again:");
+		return 0;
+	}
+
+	return 1;
+}
+
+int isValidFlightNumber(char* flightNumber)
+{
+
+	if(!isNumber(flightNumber))
+	{
+		printf("%s\n", "Error, flight number must be an integer");
+		return 0;
+	}
+
+	if(hasMoreThanThreeDigits(atoi(flightNumber))) 
+	{
+		printf("%s\n", "Error, flight number must be of equal or less than 3 digits, try again:");
 		return 0;
 	}
 

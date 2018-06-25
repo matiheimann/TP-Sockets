@@ -78,6 +78,7 @@ void* connectionSolver(void *connectionDescriptor)
 	char* userIDString;
 	char* loggedInUserID;
 	int userID;
+	char* flightNumber;
 
 	sqlite3* database;
 
@@ -88,12 +89,63 @@ void* connectionSolver(void *connectionDescriptor)
 
    	executeSQLStatement("PRAGMA foreign_keys = ON;", database); //Enable foreign keys in sqlite3
 
+   	char* message;
 	int exit = 0;
 	while(exit == 0)
 	{
 		memset(buffer, '\0', MESSAGE_SIZE); //Clear buffer before reading
 
 		read(descriptor, buffer, MESSAGE_SIZE);
+
+		if(startsWith(buffer, "AF"))	//Add flight number
+		{
+			flightNumber = buffer + 2;
+			printf("%s%s\n", "Adding flight number received: ", flightNumber);
+			if(flightExists(database, atoi(flightNumber)))
+			{
+				message = "Flight already exists\n";
+				write(descriptor, message, strlen(message));
+			}
+			else
+			{
+				createANewFlight(database, atoi(flightNumber));
+				message = "Flight succesfully created\n";
+				write(descriptor, message, strlen(message));
+			}
+		}
+		if(startsWith(buffer, "DF"))	//Delete flight number
+		{
+			flightNumber = buffer + 2;
+			printf("%s%s\n", "Deleting flight number received: ", flightNumber);
+			if(flightExists(database, atoi(flightNumber)))
+			{
+				deleteFlight(database, atoi(flightNumber));
+				message = "Flight succesfully deleted\n";
+				write(descriptor, message, strlen(message));
+			}
+			else
+			{
+				message = "Flight does not exist\n";
+				write(descriptor, message, strlen(message));
+			}
+		}
+		if(startsWith(buffer, "F"))
+		{
+			int flightFound = 0;
+			char result[200];
+
+			flightNumber = buffer + 1;
+			printf("%s%s\n", "Checking flight number state: ", flightNumber);
+			flightFound = selectSeatsFromFlight(database, atoi(flightNumber), result);
+
+			if(flightFound)
+			{
+				printf("%s\n%s\n", "Flight exists, disposition: ", result);
+				strcat(result, "\n");
+				write(descriptor, result, strlen(result));
+			}
+
+		}
 
 		if(startsWith(buffer, "validate user id: "))
 		{

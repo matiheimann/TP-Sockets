@@ -14,16 +14,9 @@
 
    	executeSQLStatement("PRAGMA foreign_keys = ON;", database); //Habilito las FOREIGN KEYS en sqlite3
 
-   	addFlight(database, 1);
-   	addUser(database, "Lorenord", 96);
-   	addSeat(database, 10, "available", 1);
-   	addReservation(database, 96, 10, 1);
-
-   	deleteFlight(database, 1); //Al estar ON DELETE CASCADE para las foreign keys, se eliminaran los asientos 
-   	  							//y reservas asociados al vuelo eliminado.
-	
-
-	userExists(database, 3);
+   	char result[200] = {0};
+	selectSeatsFromFlight(database, 2, result);
+	printf("%s\n", result);
 	sqlite3_close(database);
 }*/
 
@@ -176,6 +169,100 @@ int selectUserCallback(void *data, int argc, char **argv, char **azColName)
 {
    	*((int*)data) = USER_FOUND;
    	return 0;
+}
+
+int flightExists(sqlite3* database, int flightNumber)
+{
+	char sqlStatement[50];
+	char flightNumberToString[5];
+
+	strcpy(sqlStatement, "SELECT * FROM flight WHERE flightID=");
+	sprintf(flightNumberToString, "%d", flightNumber);
+	strcat(sqlStatement, flightNumberToString);
+	strcat(sqlStatement, ";");
+
+	char *errorMessage = 0;
+	int flightFound = FLIGHT_NOT_FOUND;
+
+	if(sqlite3_exec(database, sqlStatement, selectFlightCallback, (int*)&flightFound, &errorMessage) != SQLITE_OK)
+	{
+		fprintf(stderr, "SQL error: %s\n", errorMessage);
+      	sqlite3_free(errorMessage);
+	}	
+
+	return flightFound == FLIGHT_FOUND ? 1 : 0;
+}
+
+int selectFlightCallback(void *data, int argc, char **argv, char **azColName)
+{
+   	*((int*)data) = FLIGHT_FOUND;
+   	return 0;
+}
+
+void createANewFlight(sqlite3* database, int flightNumber)
+{
+	addFlight(database, flightNumber);
+	int i;
+	for(i=1; i<=MAX_AMOUNT_OF_SEATS; i++)
+	{
+		addSeat(database, i, AVAILABLE, flightNumber);
+	}
+}
+
+int selectSeatsFromFlight(sqlite3* database, int flightNumber, char* result)
+{
+	char sqlStatement[50];
+	char flightNumberToString[5];
+
+	strcpy(sqlStatement, "SELECT * FROM seat WHERE flightNumber=");
+	sprintf(flightNumberToString, "%d", flightNumber);
+	strcat(sqlStatement, flightNumberToString);
+	strcat(sqlStatement, ";");
+
+	char *errorMessage = 0;
+
+	if(sqlite3_exec(database, sqlStatement, selectSeatsFromFlightCallback, result, &errorMessage) != SQLITE_OK)
+	{
+		fprintf(stderr, "SQL error: %s\n", errorMessage);
+      	sqlite3_free(errorMessage);
+	}	
+
+	if(strlen(result)==0)
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+int selectSeatsFromFlightCallback(void *data, int argc, char **argv, char **colName)
+{   
+   int i;   
+   char* result = (char*)data;
+   for(i = 0; i<argc; i++)
+   {
+   	  if(strcmp(colName[i], "flightNumber") != 0)
+   	  {
+   	  	if(strcmp(colName[i], "seatState") == 0)
+   	  	{
+   	  		if(strcmp(argv[i], "available") == 0)
+   	  		{
+   	  			strcat(result, "A) ");
+   	  		}
+   	  		else if(strcmp(argv[i], "reserved") == 0)
+			{
+				strcat(result, "R) ");
+			}   	  		
+   	  	}
+   	  	if(strcmp(colName[i], "seatNumber") == 0)
+   	  	{
+   	  		strcat(result, argv[i]);
+   	  		strcat(result, "(");
+   	  	}
+   	  }
+   }
+   
+   return 0;
 }
 
 void executeSQLStatement(char* statement, sqlite3* database)

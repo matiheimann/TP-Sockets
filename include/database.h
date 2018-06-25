@@ -3,6 +3,12 @@
 
 #define USER_NOT_FOUND 0
 #define USER_FOUND 1
+#define FLIGHT_NOT_FOUND 2
+#define FLIGHT_FOUND 3
+#define AVAILABLE "available"
+#define RESERVED "reserved"
+
+#define MAX_AMOUNT_OF_SEATS 20
 
 #include <sqlite3.h> 
 
@@ -20,5 +26,10 @@ void addReservation(sqlite3* database, int useriD, int seatNumber, int flightID)
 void deleteReservation(sqlite3* database, int userID);
 int userExists(sqlite3* database, int userID);
 int selectUserCallback(void *data, int argc, char **argv, char **azColName);
+void createANewFlight(sqlite3* database, int flightNumber);
+int flightExists(sqlite3* database, int flightNumber);
+int selectFlightCallback(void *data, int argc, char **argv, char **azColName);
+int selectSeatsFromFlight(sqlite3* database, int flightNumber, char* result);
+int selectSeatsFromFlightCallback(void *data, int argc, char **argv, char **colName);
 
 #endif
