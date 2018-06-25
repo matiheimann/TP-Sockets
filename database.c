@@ -297,6 +297,38 @@ int availableSeatCallback(void *data, int argc, char **argv, char **azColName)
    	return 0;
 }
 
+int seatReserved(int seatNumber, int flight, sqlite3* database)
+{
+	char sqlStatement[100];
+	char flightNumberToString[5];
+	char seatNumberToString[2];
+
+	strcpy(sqlStatement, "SELECT * FROM seat WHERE flightNumber=");
+	sprintf(flightNumberToString, "%d", flight);
+	strcat(sqlStatement, flightNumberToString);
+	strcat(sqlStatement, " AND seatNumber=");
+	sprintf(seatNumberToString, "%d", seatNumber);
+	strcat(sqlStatement, seatNumberToString);
+	strcat(sqlStatement, " AND seatState='reserved'");
+
+	char *errorMessage = 0;
+	int seatFound = 0;
+
+	if(sqlite3_exec(database, sqlStatement, cancelSeatCallback, (int*)&seatFound, &errorMessage) != SQLITE_OK)
+	{
+		fprintf(stderr, "SQL error: %s\n", errorMessage);
+      	sqlite3_free(errorMessage);
+	}	
+
+	return seatFound == 1 ? 1 : 0;
+}
+
+int cancelSeatCallback(void *data, int argc, char **argv, char **azColName)
+{
+   	*((int*)data) = 1;
+   	return 0;
+}
+
 void reserveSeat(int seatNumber, int flight, sqlite3* database)
 {
 	char sqlStatement[100];
@@ -304,6 +336,23 @@ void reserveSeat(int seatNumber, int flight, sqlite3* database)
 	char seatNumberToString[2];
 
 	strcpy(sqlStatement, "UPDATE seat SET seatState='reserved' WHERE flightNumber=");
+	sprintf(flightNumberToString, "%d", flight);
+	strcat(sqlStatement, flightNumberToString);
+	strcat(sqlStatement, " AND seatNumber=");
+	sprintf(seatNumberToString, "%d", seatNumber);
+	strcat(sqlStatement, seatNumberToString);
+	strcat(sqlStatement, ";");
+
+	executeSQLStatement(sqlStatement, database);
+}
+
+void cancelSeat(int seatNumber, int flight, sqlite3* database)
+{
+	char sqlStatement[100];
+	char flightNumberToString[5];
+	char seatNumberToString[2];
+
+	strcpy(sqlStatement, "UPDATE seat SET seatState='available' WHERE flightNumber=");
 	sprintf(flightNumberToString, "%d", flight);
 	strcat(sqlStatement, flightNumberToString);
 	strcat(sqlStatement, " AND seatNumber=");

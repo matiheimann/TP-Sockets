@@ -194,6 +194,26 @@ void* connectionSolver(void *connectionDescriptor)
 			}
 		}
 
+		if(startsWith(buffer, "validate seat cancelation: "))
+		{
+			printf("Buffer: %s\n", buffer);
+			seat = buffer + 27;
+			seatNumber = atoi(seat);
+			flightNumber = buffer + 29;
+			flight = atoi(flightNumber);
+			printf("Validating seat cancelation, seat:%d, flight:%d\n", seatNumber, flight);
+
+			if(seatReserved(seatNumber, flight, database))
+			{
+				write(descriptor, "reserved", 9);
+				cancelSeat(seatNumber, flight, database);
+			}
+			else
+			{
+				write(descriptor, "available", 8);
+			}
+		}
+
 		if(startsWith(buffer, "validate existing user id: "))
 		{
 			userIDString = buffer + 27;
