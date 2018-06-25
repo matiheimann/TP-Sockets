@@ -1,7 +1,7 @@
-#include <utilities.h>
-#include <string.h>
-#include <math.h>
 #include <ctype.h>
+#include <math.h>
+#include <string.h>
+#include <utilities.h>
 
 int startsWith(const char *str, const char *start)
 {
@@ -15,13 +15,11 @@ int startsWith(const char *str, const char *start)
 	return 1;
 }
 
-int isNumber(char* string)
+int isNumber(char *string)
 {
 	int i;
-	for(i=0; i<strlen(string); i++)
-	{
-		if(!isdigit(string[i]))
-		{
+	for (i = 0; i < strlen(string); i++) {
+		if (!isdigit(string[i])) {
 			return 0;
 		}
 	}

@@ -5,6 +5,6 @@
 #define SOCKET_PATH "socket_path_is_useful"
 #define LISTEN_BACKLOG 50
 
-void* connectionSolver(void *connectionDescriptor);
+void *connectionSolver(void *connectionDescriptor);
 
 #endif
