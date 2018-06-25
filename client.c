@@ -81,16 +81,43 @@ int main(int argc, char const *argv[])
 	char* flightNumber;
 	char* messageFromServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
 
-	printf("%s%s\n", "Logged in with user id: ", loggedInUserID);
-	printf("%s", "What do you want to do?\n");
-	printf("%s\n", "Available commands: ");
-	printf("%s\n", "Add flight (enter 'AFn', where n is the flight number. Flight numbers cant have more than 3 digits)");
-	printf("%s\n", "Delete flight (enter 'DFn', where n is the flight number. Flight numbers cant have more than 3 digits)");
-	printf("%s\n", "Check flight state (enter 'Fn' where n is the flight number)\nIn the list presented after executing this command, A stands for available and R stands for reserved\n");
-
+	printf("%s%s\n\n", "Logged in with user id: ", loggedInUserID);
+	printf("%s\n", "Available commands: \n");
+	printf("%s\n", "* Add flight (enter 'AFn', where n is the flight number. Flight numbers cant have more than 3 digits)\n");
+	printf("%s\n", "* Delete flight (enter 'DFn', where n is the flight number. Flight numbers cant have more than 3 digits)\n");
+	printf("%s\n", "* Check flight state (enter 'Fn' where n is the flight number)\n  In the list presented after executing this command, A stands for available and R stands for reserved\n");
+	printf("%s\n", "* Reserve a seat in a given flight (enter 'Rn' where n is the flight number to see available seats\n");
 	while(exit == 0)
 	{
 		scanf("%s", command);
+
+		if(startsWith(command, "R"))
+		{
+			char* aux = (char*)calloc(MESSAGE_SIZE, sizeof(char));
+			char* selectedFlight = (char*)calloc(MESSAGE_SIZE, sizeof(char));
+			strcpy(selectedFlight, command+1);
+			if(isValidFlightNumber(selectedFlight))
+			{	
+				strcat(aux,"F");
+				strcat(aux,selectedFlight);
+				write(serverDescriptor, aux, strlen(aux)); //Write to server Fn command to see seat disposition
+				memset(messageFromServer, '\0', MESSAGE_SIZE);
+				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
+				printf("%s\n", messageFromServer);
+				printf("Enter which seat you would like to reserve: ");
+				do
+				{
+					memset(command, '\0', MESSAGE_SIZE);
+					scanf("%s", command);
+				}while(!isValidSeatReservation(command, selectedFlight, serverDescriptor));
+			}
+			write(serverDescriptor, aux, strlen(aux));
+			memset(messageFromServer, '\0', MESSAGE_SIZE);
+			read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
+			printf("%s\n", messageFromServer);
+			free(aux);
+			free(selectedFlight);
+		}
 
 		if(startsWith(command, "AF"))
 		{
@@ -98,6 +125,7 @@ int main(int argc, char const *argv[])
 			if(isValidFlightNumber(flightNumber))
 			{
 				write(serverDescriptor, command, strlen(command));
+				memset(messageFromServer, '\0', MESSAGE_SIZE);
 				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
 				printf("%s\n", messageFromServer);
 			}
@@ -108,6 +136,7 @@ int main(int argc, char const *argv[])
 			if(isValidFlightNumber(flightNumber))
 			{
 				write(serverDescriptor, command, strlen(command));
+				memset(messageFromServer, '\0', MESSAGE_SIZE);
 				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
 				printf("%s\n", messageFromServer);
 			}
@@ -118,6 +147,7 @@ int main(int argc, char const *argv[])
 			if(isValidFlightNumber(flightNumber))
 			{
 				write(serverDescriptor, command, strlen(command));
+				memset(messageFromServer, '\0', MESSAGE_SIZE);
 				read(serverDescriptor, messageFromServer, MESSAGE_SIZE);
 				printf("%s\n", messageFromServer);
 			}
@@ -230,6 +260,61 @@ int isValidFlightNumber(char* flightNumber)
 	{
 		printf("%s\n", "Error, flight number must be of equal or less than 3 digits, try again:");
 		return 0;
+	}
+
+	return 1;
+}
+
+int isValidSeatReservation(char* seat, char* flightNumber, int serverDescriptor)
+{
+	char* messageToServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
+	char* messageFromServer = (char*)calloc(MESSAGE_SIZE, sizeof(char));
+
+	strcpy(messageToServer, "validate seat reservation: ");
+	strcat(messageToServer, seat);
+	strcat(messageToServer, " ");
+	strcat(messageToServer, flightNumber);
+
+	if(!isSeatFormatValid(seat))
+	{
+		return 0;
+	}
+
+	write(serverDescriptor, messageToServer, strlen(messageToServer)); //Send seat number to server for validation
+	read(serverDescriptor, messageFromServer, MESSAGE_SIZE); //read result from server
+
+	free(messageToServer);
+
+	if(strcmp(messageFromServer, "available") == 0)
+	{
+		free(messageFromServer);
+		return 1;
+	}
+
+	if(strcmp(messageFromServer, "reserved") == 0)
+	{
+		printf("%s\n", "Seat is already reserved, choose another\n");
+		free(messageFromServer);
+		return 0;
+	}
+
+	printf("%s\n", "Error while searching seat in database, try again:");
+	return 0;	
+}
+
+int isSeatFormatValid(char* seat)
+{
+	int seatNumber = atoi(seat);
+
+	if(!isNumber(seat))
+	{
+		printf("%s\n", "Error, the seat must be a number, try again\n");
+		return 0;
+	}
+
+	if(seatNumber<0 || seatNumber>20)
+	{
+		printf("%s\n", "Error, seats numbers are between 1 and 20, try again\n");
 	}
 
 	return 1;

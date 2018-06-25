@@ -31,5 +31,8 @@ int flightExists(sqlite3* database, int flightNumber);
 int selectFlightCallback(void *data, int argc, char **argv, char **azColName);
 int selectSeatsFromFlight(sqlite3* database, int flightNumber, char* result);
 int selectSeatsFromFlightCallback(void *data, int argc, char **argv, char **colName);
+int seatAvailable(int seatNumber, int flight, sqlite3* database);
+int availableSeatCallback(void *data, int argc, char **argv, char **azColName);
+void reserveSeat(int seatNumber, int flight, sqlite3* database);
 
 #endif

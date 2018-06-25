@@ -76,9 +76,12 @@ void* connectionSolver(void *connectionDescriptor)
 	int descriptor = *((int *)connectionDescriptor);
 	char* buffer = calloc(MESSAGE_SIZE, sizeof(char));
 	char* userIDString;
+	char* seat;
 	char* loggedInUserID;
-	int userID;
 	char* flightNumber;
+	int userID;
+	int seatNumber;
+	int flight;
 
 	sqlite3* database;
 
@@ -131,19 +134,24 @@ void* connectionSolver(void *connectionDescriptor)
 		}
 		if(startsWith(buffer, "F"))
 		{
-			int flightFound = 0;
-			char result[200];
+			char* result = calloc(MESSAGE_SIZE, sizeof(char));
 
 			flightNumber = buffer + 1;
 			printf("%s%s\n", "Checking flight number state: ", flightNumber);
-			flightFound = selectSeatsFromFlight(database, atoi(flightNumber), result);
 
-			if(flightFound)
+			if(flightExists(database, atoi(flightNumber)))
 			{
-				printf("%s\n%s\n", "Flight exists, disposition: ", result);
+				selectSeatsFromFlight(database, atoi(flightNumber), result);
 				strcat(result, "\n");
+				printf("%s\n%s\n", "Flight exists, disposition: ", result);
 				write(descriptor, result, strlen(result));
 			}
+			else
+			{
+				message = "Flight does not exist\n";
+				write(descriptor, message, strlen(message));
+			}
+			free(result);
 
 		}
 
@@ -163,6 +171,26 @@ void* connectionSolver(void *connectionDescriptor)
 				addUser(database, userID); //Create new user in database
 				loggedInUserID = userIDString;
 				printf("%s%s\n", loggedInUserID, " logged in\n");
+			}
+		}
+
+		if(startsWith(buffer, "validate seat reservation: "))
+		{
+			printf("Buffer: %s\n", buffer);
+			seat = buffer + 27;
+			seatNumber = atoi(seat);
+			flightNumber = buffer + 29;
+			flight = atoi(flightNumber);
+			printf("Validating seat reservation, seat:%d, flight:%d\n", seatNumber, flight);
+
+			if(seatAvailable(seatNumber, flight, database))
+			{
+				write(descriptor, "available", 9);
+				reserveSeat(seatNumber, flight, database);
+			}
+			else
+			{
+				write(descriptor, "reserved", 8);
 			}
 		}
 
